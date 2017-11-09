@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Text CRUD</title>
+</head>
+<body>
+    <div>
+        <div>
+            <label for="text" >Text</label>
+            <input type="text" id="text" placeholder="Insert a text"/>
+        </div>
+        <div>
+            <button onclick="saveText()">Save</button>
+        </div>
+    </div>
+
+    <table id="tabel" border="2">
+        <tr>
+            <td>ID</td>
+            <td>Text</td>
+        </tr>
+    </table>
+
+</body>
+    <script type="text/javascript">
+        //<![CDATA[
+        var ws = new WebSocket("ws://localhost:8080/websocket");
+
+
+
+        function saveText(){
+            var textValue = document.getElementById('text').value;
+            if(textValue === '' || textValue === undefined){
+                alert('form masih kosong');
+            }else{
+                insertAJAX(textValue);
+            }
+        }
+
+
+        function insertAJAX(data){
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST','http://localhost:8080/api/text');
+            xhr.setRequestHeader('Content-type','application/json');
+            xhr.onreadystatechange = function (){r
+                if(xhr.readyState === 4 && xhr.status === 200){
+                    ws.send('insert');
+                }
+            };
+            var obj = {"text":data};
+            xhr.send(JSON.stringify(obj));
+        }
+        function addDataToTable(data){
+            var tabel = document.getElementById('tabel');
+
+            tabel.innerHTML = "";
+
+            var trTitle = document.createElement('tr');
+
+            var tdID = document.createElement('td');
+            var tdTitle = document.createElement('td');
+
+            tdID.innerHTML = "ID";
+            tdTitle.innerHTML = "Text";
+
+            trTitle.appendChild(tdID);
+            trTitle.appendChild(tdTitle);
+
+            tabel.appendChild(trTitle);
+
+            data.forEach(function (val){
+                var trText = document.createElement('tr');
+
+                var tdTextID = document.createElement('td');
+                var tdText = document.createElement('td');
+
+                tdTextID.innerHTML = val.id;
+                tdText.innerHTML = val.text;
+
+                trText.appendChild(tdTextID);
+                trText.appendChild(tdText);
+
+                tabel.appendChild(trText);
+            });
+        }
+
+        function loadData(){
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET','http://localhost:8080/api/text');
+
+
+            xhr.onreadystatechange = function (){
+                if(xhr.readyState === 4 && xhr.status === 200){
+                    var jsonArr = JSON.parse(xhr.responseText);
+                    addDataToTable(jsonArr);
+                }
+            };
+
+            xhr.send();
+        }
+
+        ws.onopen = function (event) {
+            loadData();
+        };
+        ws.onmessage = function (p1) {
+            if(p1.data === 'load'){
+                loadData();
+            }
+        };
+        ws.onclose = function (p1) {
+
+        };
+        ws.onerror = function (event) {
+
+        };
+        //]]>
+    </script>
+</html>
